@@ -1,12 +1,5 @@
 import math
-d = {i: math.sqrt(i) for i in range(1, 101)}
+d = {i: math.sqrt(i) for i in range(1, 101) if i%3 != 0}
 
-c = "17.84"
-c = float(c)
-print(c)
-print(type(c))
-# c = 0 
-# for i in d.items():
-#     if c < 4: 
-#         print(i)
-#     c += 1  
+pri = lambda it:print(it)
+pri(d)
