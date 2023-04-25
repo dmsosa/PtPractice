@@ -1,8 +1,12 @@
+import numpy as np
+
 #Calcolo delle operazioni essenziali con i matrici e vettori
 #Computing essential operations with matrixes and vectors
 #Wesentliche Operationen mit Matrizen und Vektoren berechnen
 
-#Sum
+#////////////////////////////////////////////////
+
+    #Sum
 
 SumA = [[1,2,3],
         [4,5,6],
@@ -23,14 +27,54 @@ for i in range(len(SumA)):
 
 #print(Result_Sum_C)
 
-#With list-comprenhension
+        #With list-comprenhension
 
 sumC = [[SumA[i][j] + SumB[i][j] for j in range(len(SumA[0]))] for i in range(len(SumA))]
 #print(sumC)
 
+#////////////////////////////////////////////////
 
-#Dot product
- 
+    #Matrizen Multiplication
+
+    #Scalar Multiplication (dot product) with Numpy
+
+dotA = [[2,4],
+     [3,6]]
+
+dotB = np.dot(dotA, 5)
+# print(B)
+
+    #Matrix Multiplication with Numpy
+
+matmulA = [[2,3,5],
+     [4,5,7]]
+
+matmulB = [[1, 0],
+     [0, 1],
+     [5, 5]]
+
+matmulC = np.matmul(matmulA,matmulB)
+# print(C [1,1])
+
+    #Wise Multiplication
+
+wiseA = np.array([[1, 2, 3], [9, 8 ,5]])
+wiseB = np.array([[28, 37, 45], [12, 14, 17]])
+
+wiseC = np.multiply(wiseA, wiseB)
+# print(wiseC)
+
+wiseC1 = np.multiply(wiseA[0, :], wiseB[1, :])
+wiseC2 = np.multiply(wiseA[1, :], wiseB[0, :])
+
+# print(wiseC1)
+# print(wiseC2)
+wiseC3 = [wiseC1, wiseC2]
+
+result = np.array(wiseC3)
+# print(result [1,2])
+
+        #With lists
 matrixA = [[12, 7, 3],
     [4, 5, 6],
     [7, 8, 9]]
@@ -48,8 +92,25 @@ for i in range(len(matrixA)):
         for k in range(len(matrixB)):
             matrixC[i][j] += matrixA[i][k] * matrixB[k][j]
 
-#print(matrixC)        
+# print(matrixC)        
 
-#With nested list comprehension
+        #With nested list comprehension
 
-m_C = [[]]
+m_C = [[sum (x*y for x,y in zip(mA_row, mB_col)) for mB_col in zip(*matrixB)] for mA_row in matrixA]
+
+# for result in m_C:
+#     print(result)
+
+#////////////////////////////////////////////////
+
+    #Transposing a matrix!
+
+m = [[9,8,7],
+     [6,5,4],
+     [3,2,1]]
+
+        #With nested list comprehension
+mT = [[m[j][i] for j in range(len(m[0]))] for i in range(len(m))]
+
+# print(mT)
+
