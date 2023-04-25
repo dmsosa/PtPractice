@@ -114,3 +114,48 @@ mT = [[m[j][i] for j in range(len(m[0]))] for i in range(len(m))]
 
 # print(mT)
 
+    #Interchanging two rows
+
+intA = [[2, 3, 1],
+        [4, 5, 9],
+        [7, 6, 8]]
+
+        #Classic method
+
+def Swap(mat, posA, posB): #This function interchanges the positions of posA and posB given as arguments.
+    row = len(mat)
+    col = len(mat[0])
+
+    for j in range(col):
+        aux = mat[posA][j]
+        mat[posA][j] = mat[posB][j]
+        mat[posB][j] = aux
+
+# Swap(intA, 0, 2)
+# print(intA)
+
+        #Without function
+    
+cloneA = intA
+
+cloneA[1], cloneA[2] = cloneA[2], cloneA[1]
+# print(cloneA)
+
+#Solving Linear Equations
+
+E = np.array([[2, -1, 5],
+     [1, 2, 5],
+     [0, 1, 0]])
+F = np.array([3, 4, 5])
+
+X = np.linalg.inv(mE).dot(mF)
+# print(X)
+
+mE = np.array([[2, -1],
+      [1, 1]])
+mF =  np.array([3, 5])
+
+mX = np.linalg.solve(mE, mF)
+# print(mX)
+
+    #With numpy
