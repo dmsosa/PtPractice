@@ -148,7 +148,7 @@ E = np.array([[2, -1, 5],
      [0, 1, 0]])
 F = np.array([3, 4, 5])
 
-X = np.linalg.inv(mE).dot(mF)
+X = np.linalg.inv(E).dot(F)
 # print(X)
 
 mE = np.array([[2, -1],
@@ -159,3 +159,13 @@ mX = np.linalg.solve(mE, mF)
 # print(mX)
 
     #With numpy
+
+archA = np.matrix([[1,1,0],
+                   [0,-1,1],
+                   [0,-2,2]])
+
+archA2 = np.array([[3,4,6]])
+archB = np.array([[5,6,7]])
+
+C = 2*archB
+print(C)
