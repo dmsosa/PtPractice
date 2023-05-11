@@ -7,10 +7,10 @@ def run():
     import requests
     import json
     
+
     def fillPokemon():
         conn = sqlite3.connect('pokedex.sqlite')
         cur = conn.cursor()
-
         cur.execute('''CREATE TABLE IF NOT EXISTS Pokemon (
         id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
         name TEXT NOT NULL UNIQUE,
@@ -59,28 +59,78 @@ def run():
             pass
     
     def fillEvos():
+        print("a")
+        # for n in range (1, 100+1):
+        #     f = requests.get(f'https://pokeapi.co/api/v2/evolution-chain/{n}/')
+        #     js = json.loads(f.text)
+        #     name = js['chain']['species']['name']
+        #     if name == "eevee":
+        #         print("We caught eevee!", js['id'])
 
-        conn = sqlite3.connect("pokedex.sqlite")
+        conn = sqlite3.connect('pokedex.sqlite')
         cur = conn.cursor()
-        
         cur.execute('''CREATE TABLE IF NOT EXISTS Evochain (
         chid INTEGER NOT NULL UNIQUE PRIMARY KEY AUTOINCREMENT,
         first INTEGER,
-        second INTEGER,
-        third INTEGER
+        evolves_to TEXT
         )''')
+        
+        for n in range (1, 1000):
+            try:
+                f = requests.get(f'https://pokeapi.co/api/v2/evolution-chain/{n}/')
+                js = json.loads(f.text)
+                chain_id = js['id']
+                first = js['chain']['species']['name']
+                evolutions = dict()
+                for evo in js['chain']['evolves_to']:
+                    try:
+                        thi = evo['evolves_to'][0]
+                        thi_name = evo['evolves_to'][0]['species']['name']
+                        evolutions[thi_name] = None
+                        try:
+                            fourth = thi['evolves_to'][0]['species']['name']
+                        except:
+                            pass
+                    except:
+                        pass
+                    sec = evo['species']['name']
+                    evolutions[sec] = None
+                
 
-        url = "https://pokeapi.co/api/v2/pokemon/{name}/"
-        cur.execute("SELECT APId FROM Pokemon")
-        for poke in cur:
-            pokeid = poke[0]
-            uh = requests.get(url.format(name=pokeid))
 
-    fill = input("which data do you want to fill up in our pokedex?")
-    if fill.lower() == "pokemon":
-        fillPokemon()
-    if fill.lower() == "evos":
-        fillEvos()
+                cur.execute('''SELECT id FROM Pokemon WHERE name = ?''', (first,))
+                first_id = cur.fetchone()[0]
+
+                for poke in evolutions.keys():
+                    cur.execute('''SELECT id FROM Pokemon WHERE name = ?''', (poke,))
+                    evolutions[poke] = cur.fetchone()[0]
+                
+                evos = ""
+                for poke, id in evolutions.items():
+                    evos += poke+":"+str(id)
+                    if len(poke) > 1:
+                        evos += ", "
+                evos = evos[:-2]
+                print(evos)
+                cur.execute('INSERT OR IGNORE INTO Evochain (chid, first, evolves_to) VALUES (?, ?, ?)',( first_id, evos))
+            except Exception as err:
+                print(err)
+                continue
+        conn.commit()
+        cur.close()
+
+
+
+
+    # fill = input("which data do you want to fill up in our pokedex?")
+    # if fill.lower() == "pokemon":
+    #     fillPokemon()
+    # if fill.lower() == "evos":
+    #     fillEvos()
     
+    todo = input("Which Data do you want to fill up?")
+    if len(todo) < 1:
+        fillEvos()
+
 if __name__ == '__main__':
     run()
