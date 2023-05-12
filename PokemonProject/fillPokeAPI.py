@@ -19,7 +19,15 @@ def run():
         hidden INTEGER,
         APId INTEGER
         )''')
+
+        #Checking if the table is already filled with data
+
+        cur.execute('SELECT * FROM Pokemon')
+        if len(cur.fetchall()) > 1:
+            print("Table already filled up!")
+            return
         
+        #//////////////////////////////////////////////////////////
         serviceurl = "https://pokeapi.co/api/v2/pokemon/{name}/"
         while True:
             pokemon = input('ready to fill up our database?')
@@ -75,6 +83,13 @@ def run():
         evolves_to TEXT
         )''')
         
+        #Checking if the table is already filled with data
+        cur.execute('SELECT * FROM Evochain')
+        if len(cur.fetchall()) > 1:
+            print("Table already filled up!")
+            return
+        
+        #//////////////////////////////////////////////////////////
         for n in range (1, 1000):
             try:
                 f = requests.get(f'https://pokeapi.co/api/v2/evolution-chain/{n}/')
@@ -122,15 +137,115 @@ def run():
 
 
 
-    # fill = input("which data do you want to fill up in our pokedex?")
-    # if fill.lower() == "pokemon":
-    #     fillPokemon()
-    # if fill.lower() == "evos":
-    #     fillEvos()
-    
+    def fillAbs():
+
+        serviceurl = 'https://pokeapi.co/api/v2/ability/{}'
+        conn = sqlite3.connect('pokedex.sqlite')
+        cur = conn.cursor()
+
+        cur.execute('''CREATE TABLE IF NOT EXISTS Abilities (
+        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE,
+        name TEXT NOT NULL UNIQUE,
+        effect TEXT,
+        de_name TEXT NOT NULL UNIQUE,
+        pokemon_with INTEGER,
+        pokemon_hidden INTEGER
+        )''')
+
+        while True:
+            many = input("How many abilities do you want to look for?\n")
+            try: 
+                many = int(many)
+            except:
+                continue
+            if many == 0:
+                print("You think you are funny, right?\n")
+                quit()
+            else:
+                break
+
+        while many > 0:
+            answer = ""
+            ab = input("Insert ability name, bitte!\n")
+            many -= 1
+            try:
+                uh = requests.get(serviceurl.format(ab))
+                js = json.loads(uh.text)
+                if uh.text.lower() == 'not found' or (len(ab) < 1):
+                    while True:
+                        answer = input("That ability was not found, do you want to search one randomly?\n")
+                        if len(answer) < 1 or answer.lower() == 'no':
+                            print("Okay!")
+                            break
+                        if answer.lower() == 'yes':
+                            break
+                
+            except Exception as err:
+                print(err)
+                continue
+            
+            if answer == "yes":
+                cur.execute('SELECT ability FROM Pokemon ORDER BY RANDOM() LIMIT 1')
+                ab = cur.fetchone()[0]
+                cur.execute('SELECT name FROM Abilities WHERE name = (?)',(ab,))
+                try:
+                    if len(cur.fetchone()[0]):
+                        print("That ability was already retrieved")
+                        continue
+                except TypeError:
+                    pass
+
+                try:
+                    uh = requests.get(serviceurl.format(ab))
+                except Exception as err:
+                    print(err)
+                    many -= 1
+                    continue
+                many -= 1
+
+                js = json.loads(uh.text)
+            try:
+                for name in js['names']:
+                    if name['language']['name'] == "de":
+                        de_name = name['name']
+                for effect in js['effect_entries']:
+                    if effect['language']['name'] == "de":
+                        de_effect = effect['effect']
+                print(de_name, de_effect)
+                poke_with = dict()
+                for poke in js['pokemon']:
+                    if not poke['is_hidden']:
+                        hid = 0
+                    else:
+                        hid = 1
+                    poke_name = poke['pokemon']['name']
+                    poke_with[poke_name] = hid
+
+                    poke_hid = 0
+                    poke_no_hid = 0
+
+                for v in poke_with.values():
+                    if v == 1:
+                        poke_hid += 1
+                    else: 
+                        poke_no_hid += 1
+            
+                cur.execute('''INSERT OR IGNORE INTO Abilities (name, effect, de_name, pokemon_with, pokemon_hidden)
+                VALUES (?, ?, ?, ?, ?)''', (ab, de_effect, de_name, poke_no_hid, poke_hid))
+                print("new ability added to our pokedex")
+            except KeyError:
+                pass
+            
+
+
+        conn.commit()
+        cur.close()
+        return
+
     todo = input("Which Data do you want to fill up?")
     if len(todo) < 1:
-        fillEvos()
+        fillAbs()
+        
 
 if __name__ == '__main__':
     run()

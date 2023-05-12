@@ -1,5 +1,6 @@
 def run():
     import sqlite3
+    import requests
 
     conn = sqlite3.connect('pokedex.sqlite')
     cur = conn.cursor()
@@ -21,15 +22,15 @@ def run():
                 for poke in cur:
                     name = poke[0]
                     commonLetter = 0
-                    if len(name) != len(pokemon) and len(name) < len(pokemon):
+                    if len(name) < len(pokemon):
                         continue
-                    if pokemon[:3] not in name:
+                    if not (pokemon[:3] in name):
                         continue
-                    if not name.startswith(pokemon):
-                        continue
+                    # if not name.startswith(pokemon[:3]):
+                    #     continue
                     for letter in range(len(name)):
                         try:
-                            if name[letter+name.index(pokemon)] == pokemon[letter]:
+                            if name[letter+name.index(pokemon[:3])] == pokemon[letter]:
                                 commonLetter += 1
                         except IndexError:
                             break
@@ -38,7 +39,6 @@ def run():
                 for k,v in suggestions.items():
                     sorted_suggestion.append((v,k))
                 sorted_suggestion = sorted(sorted_suggestion, reverse=True)
-                
                 while True:
                     typo = input("perhaps you wanted to type: '"+sorted_suggestion[0][1]+"'?\n")
                     if len(typo) < 1 or typo.lower() == "no":
