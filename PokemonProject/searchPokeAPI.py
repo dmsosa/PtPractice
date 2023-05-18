@@ -6,8 +6,6 @@ def run():
     integer = False
     while True:
         pokemon = input('What Pokemon would you like to find? (insert Pokemon''s name or id!)\n')
-        if len(pokemon) < 1:
-            continue
         try: 
             pokemon = int(pokemon)
             integer = True
@@ -24,9 +22,11 @@ def run():
     else:
         cur.execute('''SELECT id, name, ability FROM Pokemon WHERE name = (?)''',(pokemon,))
 
-    try: 
-        poke = cur.fetchone()[0]
-    except TypeError:
+    for i in cur:
+        pkid = i[0]
+        pkname = i[1]
+        pkab = i[2]
+    if len(cur.fetchone()) < 1:
         try:
             suggestions = dict()
             sorted_suggestion = list()
@@ -57,18 +57,17 @@ def run():
                     print("this pokemon is not in our pokedex!\n")
                     return
                 if typo.lower() == "yes":
-                    pokemon = sorted_suggestion[0][1]
+                    pokemon = sorted_suggestion[0][1]  
         except IndexError:
             print("this pokemon is not in our pokedex!\n")
             quit()
         except Exception as err:
             print(err)
             quit()
-    if cur.fetchone() is None:
+            
+    if typo.lower() == 'yes':
         cur.execute('''SELECT id, name, ability FROM Pokemon WHERE name = (?)''', (pokemon,))
-    pkid = cur.fetchone()[0]
-    pkname = cur.fetchone()[1]
-    pkab = cur.fetchone()[2]
+
     cur.execute('''SELECT Pokemon.id, Pokemon.name, Pokemon.ability, Abilities.effect, 
     Abilities.pokeshare, Games.games, Games.gen FROM Pokemon JOIN Abilities JOIN Games ON 
     Abilities.name = (?) AND Games.pokemon_id = (?)''',(pkab, pkid))
