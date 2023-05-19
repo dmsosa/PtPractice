@@ -21,12 +21,19 @@ def run():
         cur.execute('''SELECT id, name, ability FROM Pokemon WHERE APId = (?)''',(pokemon,))
     else:
         cur.execute('''SELECT id, name, ability FROM Pokemon WHERE name = (?)''',(pokemon,))
+    
+    try:
+        for i in cur:
+            pkid = i[0]
+            pkname = i[1]
+            pkab = i[2]
+        print(cur.fetchone(), pkid, pkname, pkab, "yo")
 
-    for i in cur:
-        pkid = i[0]
-        pkname = i[1]
-        pkab = i[2]
-    if len(cur.fetchone()) < 1:
+        cur.execute('''SELECT Pokemon.id, Pokemon.name, Pokemon.ability, Abilities.effect, 
+        Abilities.pokeshare, Games.games, Games.gen FROM Pokemon JOIN Abilities JOIN Games ON 
+        Abilities.name = (?) AND Games.pokemon_id = (?)''',(pkab, pkid))
+
+    except UnboundLocalError:
         try:
             suggestions = dict()
             sorted_suggestion = list()
@@ -38,8 +45,6 @@ def run():
                     continue
                 if not (pokemon[:3] in name):
                     continue
-                # if not name.startswith(pokemon[:3]):
-                #     continue
                 for letter in range(len(name)):
                     try:
                         if name[letter+name.index(pokemon[:3])] == pokemon[letter]:
@@ -56,21 +61,30 @@ def run():
                 if len(typo) < 1 or typo.lower() == "no":
                     print("this pokemon is not in our pokedex!\n")
                     return
-                if typo.lower() == "yes":
-                    pokemon = sorted_suggestion[0][1]  
+                elif typo.lower() == "yes":
+                    pokemon = sorted_suggestion[0][1]
+                    break  
         except IndexError:
             print("this pokemon is not in our pokedex!\n")
             quit()
         except Exception as err:
             print(err)
             quit()
-            
-    if typo.lower() == 'yes':
-        cur.execute('''SELECT id, name, ability FROM Pokemon WHERE name = (?)''', (pokemon,))
+        
+    cur.execute('''SELECT id, name, ability, APId FROM Pokemon WHERE name = (?)''', (pokemon,))
 
-    cur.execute('''SELECT Pokemon.id, Pokemon.name, Pokemon.ability, Abilities.effect, 
-    Abilities.pokeshare, Games.games, Games.gen FROM Pokemon JOIN Abilities JOIN Games ON 
-    Abilities.name = (?) AND Games.pokemon_id = (?)''',(pkab, pkid))
+    for i in cur:
+        pkid = i[0]
+        pkname = i[1]
+        pkab = i[2]
+        apid = i[3]
+    print(cur.fetchone(), pkid, pkname, pkab, "ya")
+
+    cur.execute('''SELECT Abilities.effect, Games.games
+    FROM Abilities JOIN Games ON 
+    Abilities.name = (?)
+    AND Games.pokemon_id = (?)''',(pkab, apid))
+    print(cur.fetchone())
 
         
 

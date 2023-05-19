@@ -347,9 +347,64 @@ def run():
         conn.commit()
         cur.close()
 
+    def relate():
+        conn = sqlite3.connect('pokedex.sqlite')
+        cur = conn.cursor()
+        cur.executescript('''CREATE TABLE IF NOT EXISTS Members (
+        poke_id INTEGER,
+        ab_id INTEGER,
+        game_id INTEGER,
+        PRIMARY KEY (poke_id, ab_id, game_id)
+        )''')
+
+
+        cur.execute('SELECT id FROM Pokemon')
+        pkty = len(cur.fetchall())
+        cur.execute('SELECT poke_id FROM Members')
+        abidqty = len(cur.fetchall())
+        if (pkty - abidqty) < 100:
+            print("Our data was already related up!")
+            return
+        
+        to_find = input("press to relate!\n")
+        if to_find.lower() == "exit":
+            return
+
+        try:
+            cur.execute('SELECT id, ability, APId FROM Pokemon')
+            for i in cur.fetchall():
+                pkid = i[0]
+                pkab = i[1]
+                apid = i[2]
+                try:
+                    cur.execute('SELECT * FROM Members WHERE poke_id = ? AND ab_id = ? AND game_id = ?',(pkid, abid, apid))
+                    if len(cur.fetchone()) > 1:
+                        print("That Poke was already related!")
+                except:
+                    try:
+                        cur.execute('SELECT id FROM Abilities WHERE name = (?)', (pkab,))
+                        abid = cur.fetchone()[0]
+                    except:
+                        print("That ab was not found!")
+                        continue
+                    cur.execute('INSERT OR IGNORE INTO Members (poke_id, ab_id, game_id) VALUES (?, ?, ?)', (pkid, abid, apid))
+                    print("Succesfully added!")
+                    print(pkid, pkab, apid)
+        except Exception as err:
+            print(err)
+            print("That Pokemon is not in our pokedex!")
+
+
+            #checking if the data is not already inserted
+            
+        
+        conn.commit()
+        cur.close()
+
     while True:
         todo = input("Which Data do you want to fill up?\n")
         if len(todo) < 1:
+            relate()
             continue
         if todo.lower() == "pokemon":
             fillPokemon()
@@ -363,6 +418,9 @@ def run():
         elif todo.lower() == "games":
             fillGames()
             break
+        elif todo.lower() == "exit":
+            print("Thank you for filling our database, bro!")
+            quit()
         else:
             continue
         
