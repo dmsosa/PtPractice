@@ -4,6 +4,7 @@ def run():
     conn = sqlite3.connect('pokedex.sqlite')
     cur = conn.cursor()
     integer = False
+    corrected = False
     while True:
         pokemon = input('What Pokemon would you like to find? (insert Pokemon''s name or id!)\n')
         try: 
@@ -15,25 +16,20 @@ def run():
             if len(pokemon) < 3:
                 continue
             break
-
+    
     if integer:
         print("i")
-        cur.execute('''SELECT id, name, ability FROM Pokemon WHERE APId = (?)''',(pokemon,))
+        cur.execute('''SELECT id FROM Pokemon WHERE APId = (?)''',(pokemon,))
     else:
-        cur.execute('''SELECT id, name, ability FROM Pokemon WHERE name = (?)''',(pokemon,))
+        cur.execute('''SELECT id FROM Pokemon WHERE name = (?)''',(pokemon,))
     
     try:
+        pkid = cur.fetchone()[0]
+        cur.execute('''SELECT ab_id, game_id FROM Members WHERE poke_id = ?''',(pkid,))
         for i in cur:
-            pkid = i[0]
-            pkname = i[1]
-            pkab = i[2]
-        print(cur.fetchone(), pkid, pkname, pkab, "yo")
-
-        cur.execute('''SELECT Pokemon.id, Pokemon.name, Pokemon.ability, Abilities.effect, 
-        Abilities.pokeshare, Games.games, Games.gen FROM Pokemon JOIN Abilities JOIN Games ON 
-        Abilities.name = (?) AND Games.pokemon_id = (?)''',(pkab, pkid))
-
-    except UnboundLocalError:
+            pkab = i[0]
+            apid = i[1]
+    except TypeError:
         try:
             suggestions = dict()
             sorted_suggestion = list()
@@ -63,6 +59,7 @@ def run():
                     return
                 elif typo.lower() == "yes":
                     pokemon = sorted_suggestion[0][1]
+                    corrected = True
                     break  
         except IndexError:
             print("this pokemon is not in our pokedex!\n")
@@ -71,21 +68,41 @@ def run():
             print(err)
             quit()
         
-    cur.execute('''SELECT id, name, ability, APId FROM Pokemon WHERE name = (?)''', (pokemon,))
-
+        if corrected:
+            cur.execute('''SELECT id FROM Pokemon WHERE name = (?)''', (pokemon,))
+            pkid = cur.fetchone()[0]
+            cur.execute('''SELECT ab_id, game_id FROM Members WHERE poke_id = ?''',(pkid,))
+            for i in cur:
+                pkab = i[0]
+                apid = i[1]
+    cur.execute('''SELECT Pokemon.name, Abilities.effect, Games.games, Abilities.pokeshare
+    FROM Pokemon JOIN Abilities JOIN Games ON
+    Pokemon.id = ? AND
+    Abilities.id = ? AND
+    Games.pokemon_id = ?''', (pkid, pkab, apid))
     for i in cur:
-        pkid = i[0]
-        pkname = i[1]
-        pkab = i[2]
-        apid = i[3]
-    print(cur.fetchone(), pkid, pkname, pkab, "ya")
-
-    cur.execute('''SELECT Abilities.effect, Games.games
-    FROM Abilities JOIN Games ON 
-    Abilities.name = (?)
-    AND Games.pokemon_id = (?)''',(pkab, apid))
-    print(cur.fetchone())
-
+        pname = i[0]
+        peffect = i[1]
+        pgames = i[2]
+        pwith = i[3]
+    print(cur.fetchall())
+    poke_with_ids = pwith.split()
+    gamesin = list()
+    poke_with = list()
+    for id in poke_with_ids:
+        cur.execute('SELECT name FROM Pokemon WHERE APId = ?', (id,))
+        poke_with.append(cur.fetchone()[0])
+    print(pname + " shares ability with the following pokemons: ", end="")
+    c = 0 
+    for p in poke_with:
+        if c > 0:
+            print(", "+p,end="")
+        else:
+            print(p, end=" ")
+        c += 1
+    print("\nand appears in the following games: ")
+    for g in gamesin:
+            
         
 
             
