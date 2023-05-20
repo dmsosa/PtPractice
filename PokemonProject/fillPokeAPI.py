@@ -138,11 +138,11 @@ def run():
         conn = sqlite3.connect('pokedex.sqlite')
         cur = conn.cursor()
 
-        #Checking if the table is already filled with data
-        cur.execute('SELECT * FROM Abilities')
-        if len(cur.fetchall()) > 1:
-            print("Table already filled up!")
-            return
+        # #Checking if the table is already filled with data
+        # cur.execute('SELECT * FROM Abilities')
+        # if len(cur.fetchall()) > 1:
+        #     print("Table already filled up!")
+        #     return
             
         cur.execute('''CREATE TABLE IF NOT EXISTS Abilities (
         id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE,
@@ -154,74 +154,16 @@ def run():
         pokeshare TEXT
         );''')
 
-        while True:
-            auto = False
-            many = input("How many abilities do you want to look for?\n")
-            try: 
-                many = int(many)
-            except:
-                continue
-            if many == 0:
-                print("You think you are funny, right?\n")
-                quit()
-            elif many > 10:
-                auto = True
-                automatic = input("those are a few, do you want to fill up automaticly?")
-                while automatic.lower() != "no" and automatic.lower() != "yes":
-                    automatic = input("Excuse me, do you want to fill up the data automaticly?")
-                    if automatic.lower() == "yes":
-                        auto = True
-                        break
-                    else:
-                        break
-                break
-            else:
-                break
- 
-                
-
-        while many > 0:
-            if auto:
-                cur.execute('SELECT ability FROM Pokemon ORDER BY RANDOM() LIMIT 1')
-                ab = cur.fetchone()[0]
-            else:
-                answer = ""
-                ab = input("Insert ability name, bitte!\n")
-                many -= 1
-                try:
-                    uh = requests.get(serviceurl.format(ab))
-                    if uh.text.lower() == 'not found' or (len(ab) < 1) or (uh.text is None) < 0:
-                        while True:
-                            answer = input("That ability was not found, do you want to search one randomly?\n")
-                            if len(answer) < 1 or answer.lower() == 'no':
-                                print("Okay!")
-                                break
-                            if answer.lower() == 'yes':
-                                break
-                    
-                except Exception as err:
-                    print(err)
-                    continue
-                
-                if answer == "yes":
-                    cur.execute('SELECT ability FROM Pokemon ORDER BY RANDOM() LIMIT 1')
-                    ab = cur.fetchone()[0]
-                    cur.execute('SELECT name FROM Abilities WHERE name = (?)',(ab,))
-                    try:
-                        if len(cur.fetchone()[0]) > 1:
-                            print("That ability was already retrieved")
-                            many -= 1
-                            continue
-                    except TypeError:
-                        pass
-
+    
+            
+        cur.execute('SELECT ability FROM Pokemon')
+        for i in cur.fetchall():
+            ab = i[0]
             try:
                 uh = requests.get(serviceurl.format(ab))
-                many -= 1
                 js = json.loads(uh.text)
             except Exception as err:
                 print(err)
-                many -= 1
                 continue
 
             try:
@@ -263,7 +205,7 @@ def run():
                 pokeshare_id = ""
                 c = 0
                 for id in poke_with_ids:
-                    if c > 1:
+                    if c > 0:
                         pokeshare_id += " "+str(id)
                     else:
                         pokeshare_id += str(id)
@@ -283,41 +225,37 @@ def run():
     def fillGames():
         conn = sqlite3.connect('pokedex.sqlite')
         cur = conn.cursor()
-
-        #Checking if the table is already filled with data
-        cur.execute('SELECT * FROM Games')
-        if len(cur.fetchall()) > 1:
-            print("Table already filled up!")
-            return
         
         cur.execute('''CREATE TABLE IF NOT EXISTS Games (
         pokemon_id INTEGER NOT NULL UNIQUE,
         games TEXT,
         gen TEXT NOT NULL
         )''')
+        
+        #Checking if our data is already filled up
+        try:
+            cur.execute('SELECT APId FROM Pokemon')
+            pokes_that_exists = len(cur.fetchall())
 
-        while True:
-            how_many = input("Start the filling!\n")
-            
-            try:
-                how_many = int(how_many)
-                if how_many == 0:
-                    print("0 times! are you serious?")
-                    continue
-                break
-            except:
-                continue
+            cur.execute('SELECT pokemon_id FROM Games')
+            pokes_that_we_have = len(cur.fetchall())
+            if pokes_that_exists <= pokes_that_we_have:
+                print("data already filled up!")
+                return
+        except Exception as err:
+            print(err)
+            return
 
-        while how_many > 0:
-            cur.execute('''SELECT APId FROM Pokemon ORDER BY RANDOM() LIMIT 1''')
-            id = cur.fetchone()[0]
+
+        cur.execute('''SELECT APId FROM Pokemon''')
+        for i in cur.fetchall():
+            id = i[0]
             url = "https://pokeapi.co/api/v2/pokemon/{poke}/"
             uh = requests.get(url.format(poke=id))
             try:
                 js = json.loads(uh.text)
             except Exception as err:
                 print(err)
-                how_many -= 1
                 continue
 
             game_names = list()
@@ -337,13 +275,12 @@ def run():
                 js = json.loads(uh.text)
             except Exception as err:
                 print(err)
-                how_many -= 1
                 continue
             gen = js['generation']['name']
 
             cur.execute('''INSERT OR IGNORE INTO Games (pokemon_id, games, gen) VALUES(?, ?, ?)''', (id, games, gen))
             print("new pokemon added!")
-            how_many -= 1
+
         conn.commit()
         cur.close()
 
@@ -400,6 +337,101 @@ def run():
         
         conn.commit()
         cur.close()
+    
+    def fillTypes():
+        
+        conn = sqlite3.connect('pokedex.sqlite')
+        cur = conn.cursor()
+        cur.execute("DROP TABLE Types")
+        cur.execute('''CREATE TABLE IF NOT EXISTS Types (
+        id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
+        name TEXT UNIQUE,
+        weak_to TEXT,
+        weak_for TEXT,
+        strong_to TEXT,
+        strong_for TEXT,
+        no_damage_for TEXT,
+        no_damage_to TEXT
+        )''')
+
+        types = ["normal", "grass", "fire", "water", "ground", "rock", 
+                 "flying", "fighting", "ghost", "dragon", "poison", "dark", 
+                 "psychic", "ice", "electric", "steel", "bug", "dragon"]
+        
+        weak_defending = list()
+        weak_attacking = list()
+        strong_defending = list()
+        strong_attacking = list()
+
+        weak_to = ""
+        weak_for = ""
+        strong_to = ""
+        strong_for = ""
+        no_damage_for = ""
+        no_damage_to = ""
+
+
+        for type in types: 
+            serviceurl = "https://pokeapi.co/api/v2/type/{name}"
+            url = serviceurl.format(name=type)
+            try:
+                uh = requests.get(url)
+                js = json.loads(uh.text)
+            except Exception as err:
+                print(err)
+                continue
+            
+            for i in js['damage_relations']['no_damage_to']:
+                no_damage_to += i['name']+" "
+            for i in js['damage_relations']['no_damage_from']:
+                no_damage_for += i['name']+" "
+            for i in js['damage_relations']['double_damage_from']:
+                weak_defending.append(i['name'])
+            for i in js['damage_relations']['half_damage_to']:
+                weak_attacking.append(i['name'])
+            for i in js['damage_relations']['double_damage_to']:
+                strong_attacking.append(i['name'])
+            for i in js['damage_relations']['half_damage_from']:
+                strong_defending.append(i['name'])
+
+            c = 0
+            for t in weak_defending:
+                if c > 0:
+                    weak_for += t+" "
+                else:
+                    weak_for += t
+                c += 1
+            c = 0
+            for t in weak_attacking:
+                if c > 0:
+                    weak_to += t+" "
+                else:
+                    weak_to += t
+                c += 1
+            c = 0
+            for t in strong_defending:
+                if c > 0:
+                    strong_for += t+" "
+                else:
+                    strong_for += t
+                c += 1
+            c = 0
+            for t in strong_attacking:
+                if c > 0:
+                    strong_to += t+" "
+                else:
+                    strong_to += t
+                c += 1
+            
+            if len(no_damage_for) < 1:
+                no_damage_for = "none"
+            if len(no_damage_to) < 1:
+                no_damage_to = "none"
+
+            cur.execute('''INSERT OR IGNORE INTO Types (name, weak_to, weak_for, strong_to, strong_for, no_damage_to, no_damage_for) VALUES (?, ?, ?, ?, ?, ?, ?)''',(type, weak_to, weak_for, strong_to, strong_for, no_damage_to, no_damage_for))
+            print("Type successfully added!")
+        conn.commit()
+        cur.close()
 
     while True:
         todo = input("Which Data do you want to fill up?\n")
@@ -421,6 +453,8 @@ def run():
         elif todo.lower() == "exit":
             print("Thank you for filling our database, bro!")
             quit()
+        elif todo.lower() == "types":
+            fillTypes()
         else:
             continue
         

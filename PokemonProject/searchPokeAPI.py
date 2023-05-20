@@ -75,24 +75,27 @@ def run():
             for i in cur:
                 pkab = i[0]
                 apid = i[1]
-    cur.execute('''SELECT Pokemon.name, Abilities.effect, Games.games, Abilities.pokeshare
+            print(pkid, pkab, apid)
+    cur.execute('''SELECT Pokemon.name, Abilities.name, Abilities.effect, Games.games, Abilities.pokeshare
     FROM Pokemon JOIN Abilities JOIN Games ON
     Pokemon.id = ? AND
     Abilities.id = ? AND
     Games.pokemon_id = ?''', (pkid, pkab, apid))
     for i in cur:
         pname = i[0]
-        peffect = i[1]
-        pgames = i[2]
-        pwith = i[3]
-    print(cur.fetchall())
+        abname = i[1]
+        peffect = i[2]
+        pgames = i[3]
+        pwith = i[4]
     poke_with_ids = pwith.split()
-    gamesin = list()
+    gamesin = pgames.split()
     poke_with = list()
+    
+    print(poke_with_ids)
     for id in poke_with_ids:
-        cur.execute('SELECT name FROM Pokemon WHERE APId = ?', (id,))
+        cur.execute('SELECT name FROM Pokemon WHERE id = ?', (id,))
         poke_with.append(cur.fetchone()[0])
-    print(pname + " shares ability with the following pokemons: ", end="")
+    print("Your pokemon is: "+ pname +", with pokedex number:"+str(apid)+ ", that shares ability with the following pokemons: ", end="")
     c = 0 
     for p in poke_with:
         if c > 0:
@@ -101,7 +104,16 @@ def run():
             print(p, end=" ")
         c += 1
     print("\nand appears in the following games: ")
+    c = 0
     for g in gamesin:
+        if c > 0:
+            print(", "+g, end="")
+        else:
+            print(g, end="")
+        c += 1
+
+    print("\nIts ability is: "+abname+", and has the following effect:")
+    print(peffect)        
             
         
 
