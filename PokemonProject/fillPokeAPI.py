@@ -287,11 +287,13 @@ def run():
     def relate():
         conn = sqlite3.connect('pokedex.sqlite')
         cur = conn.cursor()
+        cur.execute('DROP TABLE Members')
         cur.executescript('''CREATE TABLE IF NOT EXISTS Members (
         poke_id INTEGER,
         ab_id INTEGER,
         game_id INTEGER,
-        PRIMARY KEY (poke_id, ab_id, game_id)
+        chain_id INTEGER,
+        PRIMARY KEY (poke_id, ab_id, game_id, chain_id)
         )''')
 
 
@@ -314,19 +316,38 @@ def run():
                 pkab = i[1]
                 apid = i[2]
                 try:
-                    cur.execute('SELECT * FROM Members WHERE poke_id = ? AND ab_id = ? AND game_id = ?',(pkid, abid, apid))
+                    cur.execute('SELECT * FROM Members WHERE poke_id = ? AND ab_id = ? AND game_id = ?'
+                                ,(pkid, abid, apid))
                     if len(cur.fetchone()) > 1:
                         print("That Poke was already related!")
                 except:
                     try:
                         cur.execute('SELECT id FROM Abilities WHERE name = (?)', (pkab,))
                         abid = cur.fetchone()[0]
-                    except:
+                        cur.execute('''SELECT chid, first, evolves_to FROM Evochain''')
+                        for chain in cur.fetchall():
+                            print("pokemon:"+ str(pkid))
+                            chid = chain[0]
+                            first = chain[1]
+                            ch = chain[2]
+                            if pkid == first:
+                                chain_id = chid
+                            elif len(ch.split(", ")) == 0:
+                                chain_id = pkid 
+                            else:
+                                for i in ch.split(", "):
+                                    if i == "":
+                                        chain_id = pkid
+                                        break
+                                    if pkid == i.split(":")[1]:
+                                        chain_id = chid
+                    except Exception as err:
+                        print(err)
                         print("That ab was not found!")
                         continue
-                    cur.execute('INSERT OR IGNORE INTO Members (poke_id, ab_id, game_id) VALUES (?, ?, ?)', (pkid, abid, apid))
+                    cur.execute('INSERT OR IGNORE INTO Members (poke_id, ab_id, game_id, chain_id) VALUES (?, ?, ?, ?)', (pkid, abid, apid, chain_id))
                     print("Succesfully added!")
-                    print(pkid, pkab, apid)
+                    print(pkid, pkab, apid, chain_id)
         except Exception as err:
             print(err)
             print("That Pokemon is not in our pokedex!")
@@ -340,7 +361,6 @@ def run():
     
     def fillTypes():
         
-        conn = sqlite3.connect('pokedex.sqlite')
         cur = conn.cursor()
         cur.execute("DROP TABLE Types")
         cur.execute('''CREATE TABLE IF NOT EXISTS Types (
@@ -354,24 +374,32 @@ def run():
         no_damage_to TEXT
         )''')
 
+        try:
+            cur.execute('SELECT * FROM Types')
+            if len(cur.fetchall()) > 16:
+                print("types already filled up!")
+                return
+        except:
+            pass
+
+
         types = ["normal", "grass", "fire", "water", "ground", "rock", 
                  "flying", "fighting", "ghost", "dragon", "poison", "dark", 
                  "psychic", "ice", "electric", "steel", "bug", "dragon"]
-        
-        weak_defending = list()
-        weak_attacking = list()
-        strong_defending = list()
-        strong_attacking = list()
-
-        weak_to = ""
-        weak_for = ""
-        strong_to = ""
-        strong_for = ""
-        no_damage_for = ""
-        no_damage_to = ""
-
+    
 
         for type in types: 
+            weak_defending = list()
+            weak_attacking = list()
+            strong_defending = list()
+            strong_attacking = list()
+
+            weak_to = ""
+            weak_for = ""
+            strong_to = ""
+            strong_for = ""
+            no_damage_for = ""
+            no_damage_to = ""
             serviceurl = "https://pokeapi.co/api/v2/type/{name}"
             url = serviceurl.format(name=type)
             try:
@@ -397,28 +425,28 @@ def run():
             c = 0
             for t in weak_defending:
                 if c > 0:
-                    weak_for += t+" "
+                    weak_for += " "+t
                 else:
                     weak_for += t
                 c += 1
             c = 0
             for t in weak_attacking:
                 if c > 0:
-                    weak_to += t+" "
+                    weak_to += " "+t
                 else:
                     weak_to += t
                 c += 1
             c = 0
             for t in strong_defending:
                 if c > 0:
-                    strong_for += t+" "
+                    strong_for += " "+t
                 else:
                     strong_for += t
                 c += 1
             c = 0
             for t in strong_attacking:
                 if c > 0:
-                    strong_to += t+" "
+                    strong_to += " "+t
                 else:
                     strong_to += t
                 c += 1
