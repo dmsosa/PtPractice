@@ -316,38 +316,40 @@ def run():
                 pkab = i[1]
                 apid = i[2]
                 try:
-                    cur.execute('SELECT * FROM Members WHERE poke_id = ? AND ab_id = ? AND game_id = ?'
-                                ,(pkid, abid, apid))
-                    if len(cur.fetchone()) > 1:
-                        print("That Poke was already related!")
-                except:
-                    try:
-                        cur.execute('SELECT id FROM Abilities WHERE name = (?)', (pkab,))
-                        abid = cur.fetchone()[0]
-                        cur.execute('''SELECT chid, first, evolves_to FROM Evochain''')
-                        for chain in cur.fetchall():
-                            print("pokemon:"+ str(pkid))
+                    cur.execute('SELECT id FROM Abilities WHERE name = (?)', (pkab,))
+                    abid = cur.fetchone()[0]
+                    chain_id = None
+                    cur.execute('''SELECT chid, first FROM Evochain''')
+                    for chain in cur.fetchall():
+                        chid = chain[0]
+                        first = chain[1]
+                        if pkid == first:
+                            chain_id = chid
+                            break
+                        else:continue
+                    if chain_id == None:
+                        cur.execute('''SELECT chid, evolves_to FROM Evochain''')
+                        for chain in cur.fetchall(): 
+                            if chain_id != None:
+                                break
                             chid = chain[0]
-                            first = chain[1]
-                            ch = chain[2]
-                            if pkid == first:
-                                chain_id = chid
-                            elif len(ch.split(", ")) == 0:
-                                chain_id = pkid 
-                            else:
-                                for i in ch.split(", "):
-                                    if i == "":
-                                        chain_id = pkid
-                                        break
-                                    if pkid == i.split(":")[1]:
-                                        chain_id = chid
-                    except Exception as err:
-                        print(err)
-                        print("That ab was not found!")
-                        continue
-                    cur.execute('INSERT OR IGNORE INTO Members (poke_id, ab_id, game_id, chain_id) VALUES (?, ?, ?, ?)', (pkid, abid, apid, chain_id))
-                    print("Succesfully added!")
-                    print(pkid, pkab, apid, chain_id)
+                            ch = chain[1] 
+                            if ch.split(", ")[0] == "":continue
+                            for i in ch.split(", "):
+                                if pkid == i.split(":")[1]:
+                                    chain_id = chid
+                                    break
+                                else:continue
+                        if chain_id == None: 
+                            chain_id = pkid
+                                
+                except Exception as err:
+                    print(err)
+                    print("That ab was not found!")
+                    continue
+                cur.execute('INSERT OR IGNORE INTO Members (poke_id, ab_id, game_id, chain_id) VALUES (?, ?, ?, ?)', (pkid, abid, apid, chain_id))
+                print("Succesfully added!")
+                print(pkid, pkab, apid, chain_id)
         except Exception as err:
             print(err)
             print("That Pokemon is not in our pokedex!")
