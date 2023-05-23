@@ -287,7 +287,6 @@ def run():
     def relate():
         conn = sqlite3.connect('pokedex.sqlite')
         cur = conn.cursor()
-        cur.execute('DROP TABLE Members')
         cur.executescript('''CREATE TABLE IF NOT EXISTS Members (
         poke_id INTEGER,
         ab_id INTEGER,
@@ -334,14 +333,14 @@ def run():
                                 break
                             chid = chain[0]
                             ch = chain[1] 
-                            if ch.split(", ")[0] == "":continue
-                            for i in ch.split(", "):
-                                if pkid == i.split(":")[1]:
-                                    chain_id = chid
-                                    break
-                                else:continue
-                        if chain_id == None: 
-                            chain_id = pkid
+                            try: 
+                                for j in ch.split(", "):
+                                    print(j.split(":"))
+                                    if pkid == int(j.split(":")[1]):
+                                        chain_id = chid
+                                        break
+                            except:
+                                continue
                                 
                 except Exception as err:
                     print(err)
