@@ -31,10 +31,11 @@ def run():
         
         try:
             pkid = cur.fetchone()[0]
-            cur.execute('''SELECT ab_id, game_id FROM Members WHERE poke_id = ?''',(pkid,))
+            cur.execute('''SELECT ab_id, game_id, chain_id FROM Members WHERE poke_id = ?''',(pkid,))
             for i in cur:
                 pkab = i[0]
                 apid = i[1]
+                chid = i[2]
         except TypeError:
             try:
                 suggestions = dict()
@@ -69,7 +70,7 @@ def run():
                         break  
             except IndexError:
                 print("this pokemon is not in our pokedex!\n")
-                quit()
+                continue
             except Exception as err:
                 print(err)
                 quit()
@@ -84,11 +85,12 @@ def run():
                     chid = i[2]
                 print(pkid, pkab, apid, chid)
         cur.execute('''SELECT Pokemon.name, Pokemon.type, Abilities.name, Abilities.effect, 
-        Games.games, Abilities.pokeshare, Abilities.de_name, Evochain.evolves_to
+        Games.games, Abilities.pokeshare, Abilities.de_name, Evochain.first, Evochain.evolves_to
         FROM Pokemon JOIN Abilities JOIN Games JOIN Evochain ON
         Pokemon.id = ? AND
         Abilities.id = ? AND
-        Games.pokemon_id = ?''', (pkid, pkab, apid))
+        Games.pokemon_id = ? AND
+        Evochain.chid = ?''', (pkid, pkab, apid, chid))
         for i in cur:
             pname = i[0]
             ptypes = i[1]
@@ -97,22 +99,26 @@ def run():
             pgames = i[4]
             pwith = i[5]
             pab = i[6]
-            evo = i[7]
+            first = i[7]
+            evo = i[8]
 
+        print(evo)
         evolves_to = ""
         evos = evo.split(", ")
         if evos[0] == "": evolves_to += "None"
-        elif pkid == int(evos[1].split(":")[1]): evolves_to += evos[0].split(":")[0]
-        elif pkid == int(evos[0].split(":")[1]): evolves_to += "None"
-        else: evolves_to += evos[1].split(":")[0]
+        elif len(evos) > 1:
+            if pkid == first: evolves_to += evos[1].split(":")[0]
+            elif pkid == int(evos[0].split(":")[1]): evolves_to += "None"
+            elif pkid == int(evos[1].split(":")[1]): evolves_to += evos[0].split(":")[0]
+        else:
+            if pkid == first: evolves_to += evos[0].split(":")[0]
+            else: evolves_to += 'None'
 
         pokemon_to_add = dict()
         poke_with_ids = pwith.split()
         gamesin = pgames.split()
         poke_with = list()
         ptype = ptypes.split(", ")
-
-        print(poke_with_ids)
         for id in poke_with_ids:
             cur.execute('SELECT name FROM Pokemon WHERE id = ?', (id,))
             poke_with.append(cur.fetchone()[0])
@@ -158,10 +164,93 @@ def run():
         pokemon_to_add['no_damage_for'] = no_damage_fors
 
         my_team.append(pokemon_to_add)
+        print("Mein pokemon\n")
+        print(pokemon_to_add)
 
-      
-            
+        cur.execute("SELECT * FROM Members ORDER BY RANDOM() LIMIT 1")
+        for j in cur:
+            opid = j[0]
+            opab = j[1]
+            opga = j[2]
+            opev = j[3]
+        cur.execute('''SELECT Pokemon.name, Pokemon.type, Abilities.name, Abilities.effect, 
+        Games.games, Abilities.pokeshare, Abilities.de_name, Evochain.first, Evochain.evolves_to
+        FROM Pokemon JOIN Abilities JOIN Games JOIN Evochain ON
+        Pokemon.id = ? AND
+        Abilities.id = ? AND
+        Games.pokemon_id = ? AND
+        Evochain.chid = ?''', (opid, opab, opga, opev))
+        for j in cur:
+            opname = j[0]
+            optype = j[1]
+            opabil = j[2]
+            opeffect = j[3]
+            opgames = j[4]
+            opshare = j[5]
+            opdename = j[6]
+            opfirst = j[7]
+            opevos = j[8]
+
+        evolves_to = ""
+        evos = opevos.split(", ")
+        if evos[0] == "": evolves_to += "None"
+        elif len(evos) > 1:
+            if opid == opfirst: evolves_to += evos[1].split(":")[0]
+            elif opid == int(evos[0].split(":")[1]): evolves_to += "None"
+            elif opid == int(evos[1].split(":")[1]): evolves_to += evos[0].split(":")[0]
+        else:
+            if opid == opfirst: evolves_to += evos[0].split(":")[0]
+            else: evolves_to += 'None'
         
+        opposite_poke = dict()
+        opwith_id = opshare.split()
+        opwith = list()
+        opgamesin = opgames.split()
+        for id in opwith_id:
+            cur.execute('SELECT name FROM Pokemon WHERE id = ?',(id,))
+            opwith.append(cur.fetchone()[0])
+
+        opweak_tos = list()
+        opweak_fors = list()
+        opstrong_tos = list()
+        opstrong_fors = list()
+        opno_damage_tos = list()
+        opno_damage_fors = list()
+
+
+        for t in optype.split():
+            cur.execute('''SELECT weak_to, weak_for, strong_to, strong_for, no_damage_to, no_damage_for FROM Types where name = (?)''', (t,))
+            for j in cur:
+                weak_to = i[0]
+                weak_for = i[1]
+                strong_to = i[2]
+                strong_for = i[3]
+                no_damage_to = i[4]
+                no_damage_for = i[5]
+            opweak_tos.append(weak_to)
+            opweak_fors.append(weak_for)
+            opstrong_tos.append(strong_to)
+            opstrong_fors.append(strong_for)
+            if no_damage_to != "none":
+                opno_damage_tos.append(no_damage_to)
+            if no_damage_to != "none":
+                opno_damage_fors.append(no_damage_for)
+
+        opposite_poke['name'] = opname
+        opposite_poke['type'] = optype
+        opposite_poke['ability'] = opabil
+        opposite_poke['effect'] = opeffect
+        opposite_poke['games'] = opgamesin
+        opposite_poke['evolves_to'] = evolves_to
+        opposite_poke['pokeshare'] = opwith
+        opposite_poke['weak_to'] = weak_tos
+        opposite_poke['weak_for'] = weak_fors
+        opposite_poke['strong_to'] = strong_tos
+        opposite_poke['strong_for'] = strong_fors
+        opposite_poke['no_damage_to'] = no_damage_tos
+        opposite_poke['no_damage_for'] = no_damage_fors
+
+        opposite_team.append(opposite_poke)
 
             
              
