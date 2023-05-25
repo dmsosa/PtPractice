@@ -1,5 +1,6 @@
 def run():
     import sqlite3
+    import numpy as np
 
     conn = sqlite3.connect('pokedex.sqlite')
     cur = conn.cursor()
@@ -8,9 +9,9 @@ def run():
 
     my_team = list()
     opposite_team = list() 
-
+    times = 6
     #Filling up my team
-    for add in range(6):
+    while times > 0:
         while True:
             pokemon = input('What Pokemon would you like to choose? (insert Pokemon''s name or id!)\n')
             try: 
@@ -102,7 +103,14 @@ def run():
             first = i[7]
             evo = i[8]
 
-        print(evo)
+        for p in my_team:
+            if p['name'] == pname:
+                print("This pokemon is already in your team!")
+                pname = 'Found'
+                continue
+        if pname == 'Found':
+            continue
+
         evolves_to = ""
         evos = evo.split(", ")
         if evos[0] == "": evolves_to += "None"
@@ -166,6 +174,7 @@ def run():
         my_team.append(pokemon_to_add)
         print("Mein pokemon\n")
         print(pokemon_to_add)
+        times -= 1
 
         cur.execute("SELECT * FROM Members ORDER BY RANDOM() LIMIT 1")
         for j in cur:
@@ -252,7 +261,44 @@ def run():
 
         opposite_team.append(opposite_poke)
 
-            
+    print("Die Pokemonkampf beginn kann!")
+    vector_type = np.array([1, 1.5, -1.5, -1, -2, 2])
+    score = {"myteam":0, "opteam":0}
+    for i in range(6):
+        my_values = [0, 0, 0, 0, 0 , 0]
+        op_values = [0, 0, 0, 0, 0 , 0]
+        print(my_team[i]['name']+ "gegen: "+ opposite_team[i]['name'])
+        for j in my_team[i]['type']:
+            if j in opposite_team[i]['weak_to']:my_values[0] += 1
+            if j in opposite_team[i]['weak_for']:my_values[1] += 1
+            if j in opposite_team[i]['strong_to']:my_values[2] += 1
+            if j in opposite_team[i]['strong_for']:my_values[3] += 1
+            if j in opposite_team[i]['no_damage_to']:my_values[4] += 1
+            if j in opposite_team[i]['no_damage_for']:my_values[5] += 1
+        for j in opposite_team[i]['type']:
+            if j in opposite_team[i]['weak_to']:op_values[0] += 1
+            if j in opposite_team[i]['weak_for']:op_values[1] += 1
+            if j in opposite_team[i]['strong_to']:op_values[2] += 1
+            if j in opposite_team[i]['strong_for']:op_values[3] += 1
+            if j in opposite_team[i]['no_damage_to']:op_values[4] += 1
+            if j in opposite_team[i]['no_damage_for']:op_values[5] += 1
+        m = np.array([my_values, op_values])
+        result = np.dot(m, vector_type)
+        print(result)
+        if result[0] > result[1]: 
+            print(my_team[i]['name'] + " wins this battle!") 
+            score['myteam'] += 1
+        elif result[1] > result[0]: 
+            print(my_team[i]['name'] + " kann nich t")
+            score['opteam'] += 1
+        else: print("draw!")
+
+    print(score)
+    if score['myteam'] > score['opteam']: 
+        print("wir haben gewonnen!")
+    elif score[opteam] > score[myteam]: 
+        print("wir haben verloren!")
+    else: print("draw!")
              
 
 
