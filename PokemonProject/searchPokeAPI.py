@@ -1,6 +1,8 @@
 def run():
     import sqlite3
     import numpy as np
+    import random
+    import math
 
     conn = sqlite3.connect('pokedex.sqlite')
     cur = conn.cursor()
@@ -215,6 +217,7 @@ def run():
         opwith_id = opshare.split()
         opwith = list()
         opgamesin = opgames.split()
+        optypes = optype.split(", ")
         for id in opwith_id:
             cur.execute('SELECT name FROM Pokemon WHERE id = ?',(id,))
             opwith.append(cur.fetchone()[0])
@@ -246,7 +249,7 @@ def run():
                 opno_damage_fors.append(no_damage_for)
 
         opposite_poke['name'] = opname
-        opposite_poke['type'] = optype
+        opposite_poke['type'] = optypes
         opposite_poke['ability'] = opabil
         opposite_poke['effect'] = opeffect
         opposite_poke['games'] = opgamesin
@@ -267,36 +270,57 @@ def run():
     for i in range(6):
         my_values = [0, 0, 0, 0, 0 , 0]
         op_values = [0, 0, 0, 0, 0 , 0]
-        print(my_team[i]['name']+ "gegen: "+ opposite_team[i]['name'])
+        print(my_team[i]['name']+ " gegen: "+ opposite_team[i]['name'])
         for j in my_team[i]['type']:
-            if j in opposite_team[i]['weak_to']:my_values[0] += 1
-            if j in opposite_team[i]['weak_for']:my_values[1] += 1
-            if j in opposite_team[i]['strong_to']:my_values[2] += 1
-            if j in opposite_team[i]['strong_for']:my_values[3] += 1
-            if j in opposite_team[i]['no_damage_to']:my_values[4] += 1
-            if j in opposite_team[i]['no_damage_for']:my_values[5] += 1
+            for t in opposite_team[i]['weak_to']:
+                if j in t:my_values[0] += 1
+            for t in opposite_team[i]['weak_for']:
+                if j in t:my_values[1] += 1
+            for t in opposite_team[i]['strong_to']:
+                if j in t:my_values[2] += 1
+            for t in opposite_team[i]['strong_for']:
+                if j in t:my_values[3] += 1
+            for t in opposite_team[i]['no_damage_to']:
+                if j in t:my_values[4] += 1
+            for t in opposite_team[i]['no_damage_for']:
+                if j in t:my_values[5] += 1
+
         for j in opposite_team[i]['type']:
-            if j in opposite_team[i]['weak_to']:op_values[0] += 1
-            if j in opposite_team[i]['weak_for']:op_values[1] += 1
-            if j in opposite_team[i]['strong_to']:op_values[2] += 1
-            if j in opposite_team[i]['strong_for']:op_values[3] += 1
-            if j in opposite_team[i]['no_damage_to']:op_values[4] += 1
-            if j in opposite_team[i]['no_damage_for']:op_values[5] += 1
+            for t in my_team[i]['weak_to']:
+                if j in t:op_values[0] += 1
+            for t in my_team[i]['weak_for']:
+                if j in t:op_values[1] += 1
+            for t in my_team[i]['strong_to']:
+                if j in t:op_values[2] += 1
+            for t in my_team[i]['strong_for']:
+                if j in t:op_values[3] += 1
+            for t in my_team[i]['no_damage_to']:
+                if j in t:op_values[4] += 1
+            for t in my_team[i]['no_damage_for']:
+                if j in t:op_values[5] += 1
         m = np.array([my_values, op_values])
+        print(m)
         result = np.dot(m, vector_type)
         print(result)
         if result[0] > result[1]: 
             print(my_team[i]['name'] + " wins this battle!") 
             score['myteam'] += 1
         elif result[1] > result[0]: 
-            print(my_team[i]['name'] + " kann nich t")
+            print(my_team[i]['name'] + " kann nicht mehr weiter kampfen, "+opposite_team[i]['name']+" hab gewonnen!")
             score['opteam'] += 1
-        else: print("draw!")
+        else: 
+            rand = math.floor(random.random()*2)
+            if rand == 0:
+                print(my_team[i]['name'] + " wins this battle!") 
+                score['myteam'] += 1
+            else:
+                print(my_team[i]['name'] + " kann nicht mehr weiter kampfen, "+opposite_team[i]['name']+" hab gewonnen!")
+                score['opteam'] += 1
 
     print(score)
     if score['myteam'] > score['opteam']: 
         print("wir haben gewonnen!")
-    elif score[opteam] > score[myteam]: 
+    elif score['opteam'] > score['myteam']: 
         print("wir haben verloren!")
     else: print("draw!")
              
