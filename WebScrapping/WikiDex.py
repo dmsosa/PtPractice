@@ -70,6 +70,8 @@ if 'text/html' != r.info().get_content_type():
     cur.execute('DELETE FROM Pages WHERE url=?', ( url, ) )
     conn.commit()
 
-soup = BeautifulSoup(r.read(), 'html.parser')
-a = soup.find('a')
-
+soup = BeautifulSoup(html, 'html.parser')
+tags = soup.body.find_all('a')
+for a in tags:
+    if a.get('href') is not None:
+        next_url = a['href']
