@@ -28,8 +28,8 @@ def run():
             price_whole = div.find(class_="a-price-whole")
             price_fract = div.find(class_="a-price-fraction")
 
-            w = int(price_whole.text[:-1].replace(",","")) if price_whole else ""
-            fr = float(price_fract.text)/100 if price_fract else ""
+            w = int(price_whole.text[:-1].replace(",","")) if price_whole else 0
+            fr = float(price_fract.text)/100 if price_fract else 0
             price = w+fr
 
             data.append({
