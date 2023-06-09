@@ -19,10 +19,13 @@ def try_again(game):
             print('Tschuss!')
             return new_game
 
-def fill(todraw, indexes):
+def fill(todraw, indexes, scores):
     new_response = list()
     rat = list(indexes.keys())[0]
     index = list(indexes.values())[0]
+    random_number = math.floor(random.random()*(len(todraw['messages']['positiv'])))
+    random_phrase = todraw['messages']['positiv'][random_number]
+
     for i in todraw['response']:
         new_response.append(i)
     for i in range(len(new_response)):
@@ -34,6 +37,11 @@ def fill(todraw, indexes):
     os.system('cls')
     print(todraw['bars']+"\n "+todraw['response']+"\n"+todraw['bars'])
     print(todraw['man'])
+    
+    if scores['row'] > 2:
+        print(str(scores['row'])+" guesses in a row! +20")
+    else:
+        print(random_phrase+"\n+10")
     return todraw
 
     
@@ -45,6 +53,9 @@ def draw(scores, todraw):
     for i in range(scores['fails']*4):
         print(model_3[i], end="")
     print("")
+    random_number = math.floor(random.random()*(len(todraw['messages']['negativ'])))
+    random_phrase = todraw['messages']['negativ'][random_number]
+    print(random_phrase+'\n-10 points')
     return todraw
 
    
@@ -68,14 +79,16 @@ def check(rat, dic):
 
 
 def start_game():
+    os.system('cls')
     game = True
-    random_messages = {'positive':['Gut gemacht!', 'Du bist toll!','Eine gute Vermutung', 'Der war gut!']}
+    display_messages = {'positiv':['Gut gemacht!', 'Du bist toll!','Eine gute Vermutung', 'Der war gut!', 'Na klar!', 'Worauf wartest du?'],
+                        'negativ': ['Oh nein!', 'Leider hast du es nicht geschafft!', 'Versuch es noch einmal!', 'Vielleicht spater...', 'Nein nein nein!', 'Du bist fast da!']}
+
     while game:
-        os.system('cls')
         wort = getwort()
         dic = arbeit(wort)
         scores = {'fails':0, 'guts':0, 'double':0, 'row':0, 'guesses':[], 'maxrow':0, 'points':0}
-        todraw = {'response':"",'bars':"//", 'man':""}
+        todraw = {'response':"",'bars':"//", 'man':"", 'messages':display_messages}
         for i in range(len(wort)):
             todraw['bars'] += "/"
             todraw['response'] += "_"
@@ -99,20 +112,18 @@ def start_game():
                 if scores['row'] > scores['maxrow']:
                     scores['maxrow'] = scores['row']
                 if scores['row'] > 2:
-                    print(str(scores['row'])+" guesses in a row! +20")
                     scores['double'] += 1
                     scores['points'] += 20
                 else:
                     scores['points'] += 10
-                todraw = fill(todraw, indexes)
+                todraw = fill(todraw, indexes, scores)
             else:
-                print('Not found!\n-10 points')
                 scores['points'] -= 10
                 scores['fails'] += 1
-                if scores['row'] > 2:
-                    print("Oh, you lost it...")
-                scores['row'] = 0
                 todraw = draw(scores, todraw)
+                if scores['row'] > 2:
+                    print("Oh, you lost your "+str(scores['row'])+" row...")
+                scores['row'] = 0
                 if scores['fails'] == 12:
                     print('//////////////////////\nRuhe in Frieden x_x')
                     break
@@ -124,7 +135,10 @@ def start_game():
         else:
             game = True
             game = try_again(game)
-        return scores
+        if not game:
+            return scores
+        else:
+            continue
 def showscore(prepared_rows):
     todraw = {'roof':"==========o=========="}
     print(todraw['roof'])
