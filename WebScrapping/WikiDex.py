@@ -13,8 +13,8 @@ ctx.verify_mode = ssl.CERT_NONE
 
 cur.execute("""CREATE TABLE IF NOT EXISTS Pages (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
-url TEXT,
-html TEXT,
+url TEXT UNIQUE,
+html TEXT UNIQUE,
 error INTEGER
 )
 """)
@@ -64,7 +64,7 @@ while True:
         many = int(val)
     many -= 1
     #Retrieving an unretrieved url randomly
-    cur.execute("""SELECT id, url FROM Pages WHERE html is NULL AND error is 0 ORDER BY RANDOM() LIMIT 1""")
+    cur.execute("""SELECT id, url FROM Pages WHERE html is NULL AND error = 0 ORDER BY RANDOM() LIMIT 1""")
     try:
         row = cur.fetchone()
         fromid = row[0]
@@ -73,7 +73,9 @@ while True:
         print('no unretrieved Seiten found')
         many = 0
         break
+    print(fromid, url, end=" s")
 
+    #We shouldn't have links from this id if it is the first time we retrieve it.
     cur.execute('DELETE FROM Links WHERE fromid = ?', (fromid, ))
 
     try:
@@ -81,7 +83,7 @@ while True:
         html = r.read()
     except:
         print('could not send the request!')
-    print(url, "with", len(html), "characters retrieved!")
+    print("("+(str(len(html)))+" characters retrieved!)", end=" ")
     if r.getcode() != 200:
         print('Error!', r.getcode())
         cur.execute('UPDATE Pages SET error = 1 WHERE url = ?', (url,))
@@ -98,16 +100,14 @@ while True:
         print(err)
         pass
 
-    cur.execute('''INSERT OR IGNORE INTO Pages (url, error) VALUES (?, ?)''', (url, 0))
     cur.execute('''UPDATE Pages SET html = ? WHERE url = ?''', (html, url))
-
-
 
     tags = soup.body.find_all('a')
     count = 0
     for a in tags:
         href = a.get('href', None)
         if href is None: continue
+        #handling relative hrefs like /contact, /documents, /settings...
         up = urllib.parse.urlparse(href)
         if (len(up.scheme) < 1):
             href = urllib.parse.urljoin(url, href)
