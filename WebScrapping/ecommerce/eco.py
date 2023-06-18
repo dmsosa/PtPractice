@@ -1,26 +1,29 @@
-import threading
-import requests
+import threading, os
+import requests, sys
+import time, random, re
 from bs4 import BeautifulSoup
-import sys
 sys.stdin.reconfigure(encoding='utf-8')
 sys.stdout.reconfigure(encoding='utf-8')
 
-HEADERS = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'}
+HEADERS = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36', "Referer":"https://www.google.com"}
 ecommerces = ['ebay', 'amazon', 'walmart', 'avito', 'aliexpress']
 
 search=input('Welches Produkt mochten Sie suchen?')
 
-def search_ebay(search, headers):
-    
+
+#Ebay search func
+def search_ebay(search, headers, products):
+    print('Ebay assigned to thread {}'.format(threading.current_thread().name))
     page=1
-    products=dict()
     # while page < 20:
     
     while page < 3:
+        rand_sleep = random.randint(10, 19)/10
+        time.sleep(rand_sleep)
         ebay=f'https://www.ebay.de/sch/i.html?_from=R40&_nkw={search}&_sacat=0&LH_TitleDesc=0&_pgn={page}'
         try:
-            re = requests.get(ebay, headers=HEADERS)
-            html = re.text
+            req = requests.get(ebay, headers=HEADERS)
+            html = req.text
         except Exception as err:
             print(err)
             return
@@ -35,18 +38,20 @@ def search_ebay(search, headers):
                 products[title] = price
             except:continue
         page += 1
-    
-    return products
-#unsere seiten
 
-def search_alie(search, headers):
+
+#AliExpress search func
+def search_alie(search, headers, products):
+    print('Alie assigned to thread {}'.format(threading.current_thread().name))
     page = 1
-    products = dict()
     while page < 5:
+        rand_sleep = random.randint(10, 19)/10
+        print('sleeping', rand_sleep, 'seconds')
+        time.sleep(rand_sleep)
         alie=f'https://www.aliexpress.com/af/{search}.html?SearchText={search}&catId=0&initiative_id=SB_20230617061855&spm=a2g0o.productlist.1000002.0&trafficChannel=af&g=y&page={page}'
         try:
-            re = requests.get(alie, headers=HEADERS)
-            html = re.text
+            req = requests.get(alie, headers=HEADERS)
+            html = req.text
         except Exception as err:
             print(err)
             return
@@ -61,15 +66,52 @@ def search_alie(search, headers):
             except:continue
             
         page += 1 
-    return products
 
-def search_walmart(search, HEADERS):
+#Walmart search func
+def search_walmart(search, headers, products):
+    print('Walmart assigned to thread {}'.format(threading.current_thread().name))
+    page = 1
+    
+    while page < 5:
+        rand_sleep = random.randint(10, 19)/10
+        time.sleep(rand_sleep)
+        walmart='https://www.walmart.com/search?q=%s&page=%x&affinityOverride=default'%(search, page)
+        try:
+            req = requests.get(walmart, headers=HEADERS)
+            html = req.text
+            
+        except Exception as err:
+            print(err)
+            return
+        soup = BeautifulSoup(html, 'html.parser')
+        items = soup.find('div', class_='flex flex-wrap w-100 flex-grow-0 flex-shrink-0 ph2 pr0-xl pl4-xl mt0-xl')
+        for item in items:
+            item = items.find()
+            price = item.find('div', attrs={'data-automation-id':"product-price"}).find('div').text
+            numeric_price = float(re.search('\d+.\d+',price).group())
+            title = item.find('span', attrs={'data-automation-id':'product-title'}).string
+            products[title] = numeric_price
+        page += 1
 
-# walmart='https://www.walmart.com/search?q=%s}'%search
+if __name__=='__main__':
 
-ebay_products = search_ebay(search, HEADERS)
-alie_products = search_alie(search, HEADERS)
+    products = dict()
+    print('ID of current main process {}'.format(os.getpid()))
+    x = threading.Thread(target=search_ebay(search, HEADERS, products))
+    y = threading.Thread(target=search_alie(search, HEADERS, products))
+    z = threading.Thread(target=search_alie(search, HEADERS, products))
+    x.start()
+    y.start()
+    z.start()
+    x.join()
+    y.join()
+    z.join()
 
-print(alie_products)
-# ebay_products = search_ebay(search, HEADERS)
+    print('finished\n')
+    c = 0
+    for p in products.items():
+        print(p)
+        c+=1
+        if c > 5:
+            break
 
