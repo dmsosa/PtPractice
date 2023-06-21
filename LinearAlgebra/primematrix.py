@@ -34,6 +34,7 @@ def model_matrix():
         for j in range(0,n):
             row.append(0)
         matrix.append(row)
+    os.system('cls')
     print('los gehts!')
     return(matrix)
 
@@ -67,7 +68,6 @@ def construct_matrix(model_matrix):
         for i in range(len(m)):
             for j in range(len(m[0])):
                 while True:
-                    os.system('cls')
                     message = random_messages[random.randint(0,(len(random_messages)-1))]
                     n = (input('\n'))
                     try:
@@ -75,12 +75,12 @@ def construct_matrix(model_matrix):
                         if not isprime(n):
                             print('Kein Primzahl!')
                             continue
-                        print(message)
                         break
                     except:
                         print('Ungultiges Datei!')
                         continue
-                    
+                os.system('cls')
+                print(message)
                 m[i][j] = n
                 print(np.array(m))
             fact = funfact()
