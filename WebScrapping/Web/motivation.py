@@ -21,7 +21,7 @@ phraseBook = dict()
 for p in phrases:
     try:
         sentence = re.search('[0-9]+(.*)', p.text).group().split('(')
-        phrase = sentence[0]
+        phrase = sentence[0].strip('0123456789. ')
         author = sentence[1][:-1].split(",")[0]
         phraseBook[phrase] = author
     except: continue
@@ -35,11 +35,12 @@ with open('./phrases.xml', 'w',encoding='utf-8') as f:
     for k,v in phraseBook.items():
         f.write('  <li>\n    <p>'+k+'</p>\n    <a>'+v+'</a>\n  </li>\n')
         c += 1
-        if c == 40:
-            continue
         if c % 10 == 0:
-            i += 1
-            f.write('</ul>\n<ul class="{}">\n'.format(headers[i]))
+            try:
+                i += 1
+                f.write('</ul>\n<ul class="{}">\n'.format(headers[i]))
+            except IndexError:
+                continue
     f.write('</ul>')
 
 print('File written!')
