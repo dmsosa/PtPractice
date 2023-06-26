@@ -14,17 +14,26 @@ options.add_experimental_option('detach', True)
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 driver.get('https://www.youtube.com/')
 time.sleep(3)
-cookies_window = 'eom-v1-dialog style-scope ytd-consent-bump-v2-lightbox style-scope ytd-consent-bump-v2-lightbox'
+button_xpath = '//tp-yt-paper-dialog[@id="dialog"]/div[@id="content"]/div[last()]/div[6]/div[1]/ytd-button-renderer[last()]//button'
+bar_xpath = '//div[@id="content"]/div[@id="masthead-container"]/ytd-masthead[@id="masthead"]//div[@id="center"]/ytd-searchbox[@id="search"]/form[@id="search-form"]//div[@id="search-input"]/input[@id="search"]'
+
 try:
-    window = driver.find_element(By.ID, 'dialog')
-    print(window.value_of_css_property('color'))
-
-    buttons = WebDriverWait(window, 10).until(EC.presence_of_all_elements_located((By.TAG_NAME, 'button')))
+    # Die akzeptieren schaltflache finden
+    accept_button = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.XPATH, button_xpath))
+    )
+    print(accept_button.text)
 except:
-    print("Not found")
-# if button is not None:
-#     button.click()
-# bar = driver.find_element(By.ID, 'search')
+    accept_button = None
+if accept_button is not None:
+    accept_button.click()
 
-# bar.click()
-# bar.send_keys('Hellos')
+time.sleep(5)
+bar = driver.find_element(By.NAME, 'search_query')
+bar.send_keys('Hello Mann!')
+time.sleep(2)
+bar.send_keys(Keys.RETURN)
+
+quit()
+
+
