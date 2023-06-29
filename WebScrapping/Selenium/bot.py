@@ -33,7 +33,9 @@ bar = driver.find_element(By.NAME, 'search_query')
 bar.send_keys('Hello Mann!')
 time.sleep(2)
 bar.send_keys(Keys.RETURN)
-
+time.sleep(5)
+video = driver.find_element(By.CSS_SELECTOR, 'ytd-video-renderer[bigger-thumbs-style=DEFAULT]')
+video.click()
 quit()
 
 

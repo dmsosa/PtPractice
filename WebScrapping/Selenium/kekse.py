@@ -21,34 +21,36 @@ def run():
         else:
             value = int(item.split(" ")[0])
         return value
-    def clickCookie(driver, element, max=None):
-        c = 0
-        while max is None or c <= max:
+    def clickCookie(driver, element):
             actions = ActionChains(driver)
             actions.click(element)
             actions.perform()
-            c += 1
     def purchaseProduct(driver, element):
         actions = ActionChains(driver)
         actions.move_to_element(element)
         actions.click()
         actions.perform()
+        print('purchased!')
 
+#Setting up Selenium
     options = webdriver.ChromeOptions()
     service = Service(ChromeDriverManager().install())
     options.add_experimental_option('detach', True)
     driver = webdriver.Chrome(options=options, service=service)
     driver.get('https://orteil.dashnet.org/cookieclicker/')
-    button = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'button.fc-button.fc-cta-consent.fc-primary-button'))
-                                            )
+
+
+#Closing cookies windows / Unerwunschte Fernster schliessen
+    button = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'button.fc-button.fc-cta-consent.fc-primary-button')))
     print(button.text, 'cookies')
     button.click()
     driver.implicitly_wait(3)
+
+#Selecting Language / Sprache auswahlen
     lang = driver.find_element(By.ID, 'langSelect-DE')
     sprach = lang.text
     lang.click()
     print('selecting language...', sprach)
-
     time.sleep(4)
     ads2 = driver.find_element(By.CSS_SELECTOR, 'div.cc_banner.cc_container.cc_container--open a.cc_btn.cc_btn_accept_all')
     ads2.click()
@@ -56,41 +58,19 @@ def run():
     ads.click()
     time.sleep(2)
 
+#Kekse finden
     cookie = driver.find_element(By.CSS_SELECTOR, '#bigCookie')
     count = driver.find_element(By.ID, 'cookies')
     products = [driver.find_element(By.ID, 'productPrice'+str(i)) for i in range(1,-1,-1)]
-    actions = ActionChains(driver)
 
-    click = threading.Thread(target=clickCookie, args=(driver, cookie), daemon=True)
-    click.start()
-    c = 0
-    for j in range(50):
-        c += 1
-    if c > 0:
-        click.join()
-    
-
-    # for product in products:
-    #     actions.click(cookie)
-    #     actions.perform()
-    #     productPrice = int(product.text.strip('""'))
-    #     actions
-
-
-    # for j in range(0, 5000):
-    #     info = driver.find_element(By.ID, 'logButton')
-    #     actions.click(info)
-    #     actions.perform()
-    #     close = driver.find_element(By.CSS_SELECTOR, 'div#menu>div')
-    #     actions.click(close)
-    #     actions.perform()
-        
-        
-    # for product in products:
-    #     content = product.find_element(By.CSS_SELECTOR, 'div.content')
-    #     price = content.find_element(By.CSS_SELECTOR, 'span.price').text
-    #     print(price)
-    #     break
+#Kekse klicken und Produkte kaufen!
+    for j in range(0, 5000):
+        clickCookie(driver, cookie)
+        my_cookies = getValue(count.text)
+        for product in products:
+            price = getValue(product.text)
+            if price <= my_cookies:
+                purchaseProduct(driver, product)
 
 if __name__ == '__main__':
     run()
