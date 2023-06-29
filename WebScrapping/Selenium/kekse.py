@@ -23,9 +23,9 @@ print(button.text, 'cookies')
 button.click()
 driver.implicitly_wait(3)
 lang = driver.find_element(By.ID, 'langSelect-DE')
+sprach = lang.text
 lang.click()
-
-print('selecting language...', lang.text)
+print('selecting language...', sprach)
 
 time.sleep(4)
 ads2 = driver.find_element(By.CSS_SELECTOR, 'div.cc_banner.cc_container.cc_container--open a.cc_btn.cc_btn_accept_all')
@@ -34,20 +34,27 @@ ads = driver.find_element(By.XPATH, '//ins/img[last()]')
 ads.click()
 time.sleep(2)
 
-
-time.sleep(2)
-cookie = driver.find_element(By.CSS_SELECTOR, 'button#bigCookie')
+cookie = driver.find_element(By.CSS_SELECTOR, '#bigCookie')
 count = driver.find_element(By.ID, 'cookies')
+count = int(str(count.text).split(" ")[0])
+print(count)
 products = [driver.find_element(By.ID, 'productPrice'+str(i)) for i in range(1,-1,-1)]
 actions = ActionChains(driver)
 
-info = driver.find_element(By.ID, 'logButton')
-close = driver.find_element(By.CSS_SELECTOR, 'div#menu > div.close.menuClose')
-actions.click(info)
-actions.click(close)
+for product in products:
+    productPrice = int(product.text.strip('""'))
+    print(productPrice)
 
-for j in range(0, 50):
-    actions.perform()
+
+# for j in range(0, 5000):
+#     info = driver.find_element(By.ID, 'logButton')
+#     actions.click(info)
+#     actions.perform()
+#     close = driver.find_element(By.CSS_SELECTOR, 'div#menu>div')
+#     actions.click(close)
+#     actions.perform()
+    
+    
 # for product in products:
 #     content = product.find_element(By.CSS_SELECTOR, 'div.content')
 #     price = content.find_element(By.CSS_SELECTOR, 'span.price').text
